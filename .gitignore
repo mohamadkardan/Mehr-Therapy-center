@@ -1,0 +1,9 @@
+# Ignore the virtual environment
+venv/
+
+# Ignore Python bytecode files
+*.pyc
+__pycache__/
+
+# Ignore SQLite database file
+db.sqlite3
