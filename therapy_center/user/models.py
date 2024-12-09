@@ -80,7 +80,7 @@ class TherapySession(models.Model):
     """
     client = models.ForeignKey(Client, on_delete=models.SET_NULL, related_name='sessions', null=True)
     therapist = models.ForeignKey(Therapist, on_delete=models.SET_NULL, related_name='sessions', null=True)
-    center = models.ForeignKey(Center, on_delete=models.SET_NULL, null=True, related_name='sessions', null=True)
+    center = models.ForeignKey(Center, on_delete=models.SET_NULL, related_name='sessions', null=True)
     date_time = models.DateTimeField()
     duration = models.PositiveIntegerField()  # Duration in minutes
     client_note = models.TextField(blank=True, null=True)
