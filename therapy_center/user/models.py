@@ -95,7 +95,7 @@ class Dossier(models.Model):
     """
     client = models.ForeignKey(Client, on_delete=models.SET_NULL, related_name='dossiers', null=True)
     therapist = models.ForeignKey(Therapist, on_delete=models.SET_NULL, related_name='dossiers', null=True)
-    category = models.ForeignKey('DossierCategory', on_delete=models.SET_NULL, null=True, related_name='dossiers', null=True)
+    category = models.ForeignKey('DossierCategory', on_delete=models.SET_NULL, related_name='dossiers', null=True)
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
