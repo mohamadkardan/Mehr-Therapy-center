@@ -78,9 +78,9 @@ class TherapySession(models.Model):
     """
     Represents a therapy session booked between a client and a therapist.
     """
-    client = models.ForeignKey(Client, on_delete=models.SET_NULL, related_name='sessions')
-    therapist = models.ForeignKey(Therapist, on_delete=models.SET_NULL, related_name='sessions')
-    center = models.ForeignKey(Center, on_delete=models.SET_NULL, null=True, related_name='sessions')
+    client = models.ForeignKey(Client, on_delete=models.SET_NULL, related_name='sessions', null=True)
+    therapist = models.ForeignKey(Therapist, on_delete=models.SET_NULL, related_name='sessions', null=True)
+    center = models.ForeignKey(Center, on_delete=models.SET_NULL, null=True, related_name='sessions', null=True)
     date_time = models.DateTimeField()
     duration = models.PositiveIntegerField()  # Duration in minutes
     client_note = models.TextField(blank=True, null=True)
@@ -93,9 +93,9 @@ class Dossier(models.Model):
     """
     Represents a dossier or medical file related to a client and managed by a therapist.
     """
-    client = models.ForeignKey(Client, on_delete=models.SET_NULL, related_name='dossiers')
-    therapist = models.ForeignKey(Therapist, on_delete=models.SET_NULL, related_name='dossiers')
-    category = models.ForeignKey('DossierCategory', on_delete=models.SET_NULL, null=True, related_name='dossiers')
+    client = models.ForeignKey(Client, on_delete=models.SET_NULL, related_name='dossiers', null=True)
+    therapist = models.ForeignKey(Therapist, on_delete=models.SET_NULL, related_name='dossiers', null=True)
+    category = models.ForeignKey('DossierCategory', on_delete=models.SET_NULL, null=True, related_name='dossiers', null=True)
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -116,8 +116,8 @@ class FavoriteCenter(models.Model):
     """
     Represents a user's favorite therapy centers.
     """
-    center = models.ForeignKey(Center, on_delete=models.SET_NULL, related_name='favorited_by')
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='favorite_centers')
+    center = models.ForeignKey(Center, on_delete=models.SET_NULL, related_name='favorited_by', null=True)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='favorite_centers', null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
@@ -139,7 +139,7 @@ class Workshop(models.Model):
     description = models.TextField()
     location = models.TextField()
     image = models.ImageField(upload_to='workshop_images/')
-    instructor = models.ForeignKey("Instructor", on_delete=models.SET_NULL)
+    instructor = models.ForeignKey("Instructor", on_delete=models.SET_NULL, null=True)
     start_date = models.DateTimeField()
     end_date = models.DateTimeField()
     duration = models.PositiveIntegerField()
@@ -174,7 +174,7 @@ class Ticket(models.Model):
     
 class TicketResponse(models.Model):
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE)
-    responder = models.ForeignKey(User, on_delete=models.SET_NULL)
+    responder = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     message = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     
@@ -197,8 +197,8 @@ class TestScore(models.Model):
     """
     Represents the score a client has earned in a psychological test.
     """
-    user = models.ForeignKey(User, on_delete=models.SET_NULL)
-    psychology_test = models.ForeignKey(PsychologyTest, on_delete=models.SET_NULL)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    psychology_test = models.ForeignKey(PsychologyTest, on_delete=models.SET_NULL, null=True)
     percentage_correct_answer = models.PositiveSmallIntegerField()
     earned_points = models.PositiveSmallIntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
