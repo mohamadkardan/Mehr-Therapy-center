@@ -1,0 +1,277 @@
+from django.db import models
+from django.core.exceptions import ValidationError
+
+# Create your models here.
+
+class User(models.Model):
+    """
+    Represents a user in the system. Each user can have a specific role, such as client or therapist.
+    """
+    
+    ROLE_CHOICES = [
+        ('client', 'مراجع'),
+        ('therapist', 'مشاور'),
+        ('center', 'مرکز'),
+        ('owner', 'ادمین اصلی'),
+    ]
+
+    phone_number = models.CharField(max_length=11)
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.role} - {self.phone_number}"
+    
+class Client(models.Model):
+    """
+    Represents a client profile, linked to a user account.
+    """
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='client_profile')
+    fullname = models.CharField(max_length=255)
+    profile_image_url = models.URLField(blank=True, null=True)
+
+    def __str__(self):
+        return self.fullname
+    
+class Therapist(models.Model):
+    """
+    Represents a therapist profile, linked to a user account.
+    """
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='therapist_profile')
+    center = models.ForeignKey('Center', on_delete=models.CASCADE, related_name='therapists')
+    fullname = models.CharField(max_length=255)
+    specialization = models.CharField(max_length=255)
+    experience_years = models.PositiveIntegerField()
+
+    def __str__(self):
+        return self.fullname
+    
+class Center(models.Model):
+    """
+    Represents a therapy or medical center where therapists work.
+    """
+    name = models.CharField(max_length=255)
+    address = models.TextField()
+    open_time = models.TimeField()
+    close_time = models.TimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+class Instructor(models.Model):
+    """
+    Represents an instructor who can host workshops and events.
+    """
+    
+    fullname = models.CharField(max_length=255)
+    specialization = models.CharField(max_length=255)
+    experience_years = models.PositiveIntegerField()
+    profile_picture_url = models.ImageField(upload_to='profile_images/')
+    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return self.fullname
+
+class TherapySession(models.Model):
+    """
+    Represents a therapy session booked between a client and a therapist.
+    """
+    client = models.ForeignKey(Client, on_delete=models.SET_NULL, related_name='sessions')
+    therapist = models.ForeignKey(Therapist, on_delete=models.SET_NULL, related_name='sessions')
+    center = models.ForeignKey(Center, on_delete=models.SET_NULL, null=True, related_name='sessions')
+    date_time = models.DateTimeField()
+    duration = models.PositiveIntegerField()  # Duration in minutes
+    client_note = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Session with {self.client.fullname} and {self.therapist.fullname} at {self.date_time}"
+
+class Dossier(models.Model):
+    """
+    Represents a dossier or medical file related to a client and managed by a therapist.
+    """
+    client = models.ForeignKey(Client, on_delete=models.SET_NULL, related_name='dossiers')
+    therapist = models.ForeignKey(Therapist, on_delete=models.SET_NULL, related_name='dossiers')
+    category = models.ForeignKey('DossierCategory', on_delete=models.SET_NULL, null=True, related_name='dossiers')
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Dossier for {self.client.fullname}"
+
+class DossierCategory(models.Model):
+    """
+    Represents a category for dossiers to classify different types of cases or files.
+    """
+    title = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return self.title
+
+class FavoriteCenter(models.Model):
+    """
+    Represents a user's favorite therapy centers.
+    """
+    center = models.ForeignKey(Center, on_delete=models.SET_NULL, related_name='favorited_by')
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='favorite_centers')
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.user.phone_number} - {self.center.name}"
+
+class Workshop(models.Model):
+    """
+    Represents a workshop or event hosted by a therapist or instructor.
+    """
+    STATUS_CHOICES = [
+        ('scheduled', 'برنامه‌ریزی شده'),
+        ('ongoing', 'در حال برگزاری'),
+        ('completed', 'تکمیل شده'),
+        ('canceled', 'لغو شده'),
+    ]
+
+    title = models.CharField(max_length=255)
+    subject = models.CharField(max_length=255)
+    description = models.TextField()
+    location = models.TextField()
+    image = models.ImageField(upload_to='workshop_images/')
+    instructor = models.ForeignKey("Instructor", on_delete=models.SET_NULL)
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField()
+    duration = models.PositiveIntegerField()
+    price = models.PositiveIntegerField()
+    status = models.CharField(max_length=55, choices= STATUS_CHOICES, default='scheduled')
+    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.title} - {self.status}"
+    
+class Ticket(models.Model):
+    """
+    Represents a support or inquiry ticket submitted by a user.
+    """
+    STATUS_CHOICES = [
+        ('open', 'باز'),               # Ticket created, awaiting action
+        ('in_progress', 'در حال پیگیری'), # Work has started on the ticket
+        ('pending', 'در انتظار'),         # Waiting for user or external action
+        ('resolved', 'حل شده'),       # Issue resolved, pending closure
+        ('closed', 'بسته شده'),           # Ticket finalized
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    description = models.TextField()
+    status = models.CharField(max_length=55, choices= STATUS_CHOICES, default='open')
+    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.user.phone_number} - {self.status}"
+    
+class TicketResponse(models.Model):
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE)
+    responder = models.ForeignKey(User, on_delete=models.SET_NULL)
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"Ticket title: {self.ticket.description} - Last response: {self.message}"
+    
+class PsychologyTest(models.Model):
+    """
+    Represents a psychological test taken by a client.
+    """
+    title = models.CharField(max_length=255)
+    question_count = models.PositiveSmallIntegerField()
+    price = models.PositiveIntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.title} - {self.question_count}"
+    
+class TestScore(models.Model):
+    """
+    Represents the score a client has earned in a psychological test.
+    """
+    user = models.ForeignKey(User, on_delete=models.SET_NULL)
+    psychology_test = models.ForeignKey(PsychologyTest, on_delete=models.SET_NULL)
+    percentage_correct_answer = models.PositiveSmallIntegerField()
+    earned_points = models.PositiveSmallIntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"User: {self.user.phone_number} - Psychology test: {self.psychology_test.title} - Correct answer: {self.percentage_correct_answer}"
+    
+class PsychologyTestQuestion(models.Model):
+    """
+    Represents a question in a psychological test.
+    """
+    title = models.CharField(max_length=255)
+    psychology_test = models.ForeignKey(PsychologyTest, on_delete=models.CASCADE)
+    
+    def __str__(self):
+        return self.title
+
+class PsychologyTestAnswer(models.Model):
+    title = models.CharField(max_length=500)
+    score = models.SmallIntegerField()
+    psychology_test_question = models.ForeignKey(PsychologyTestQuestion, on_delete=models.CASCADE)
+    
+    def __str__(self):
+        return self.title
+ 
+class Comment(models.Model):
+    """
+    Represents a comment made by a user on various entities such as centers or therapists.
+    """
+    USER_ROLE_CHOICES = [
+        ('client','مراجع'),
+        ('therapist', 'مشاور'),
+        ('center','مرکز'),
+        ('owner','ادمین اصلی')
+    ]
+    related_user_role = models.CharField(max_length=55, choices= USER_ROLE_CHOICES)
+    related_user = models.ForeignKey(User, on_delete=models.CASCADE)
+    text = models.TextField(max_length=3000)
+    score = models.PositiveSmallIntegerField()
+    likes_count = models.PositiveSmallIntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def clean(self):
+        if len(self.text) > 3000:
+            raise ValidationError("Comment cannot exceed 3000 characters.")
+    
+    def __str__(self):
+        return f"{self.related_user.phone_number} - {self.score}"
+    
+class Webinar(models.Model):
+    """
+    Represents an online seminar or educational session conducted by an instructor.
+    """
+    title = models.CharField(max_length=255)
+    caption = models.CharField(max_length=500)
+    bannerImage = models.ImageField(upload_to='webinar_images/')
+    webpage_url = models.URLField(max_length=500)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return self.title
+    
+class AboutUs(models.Model):
+    """
+    Represents content for the 'About Us' section of the application or website.
+    """
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    description_image = models.ImageField(upload_to='about_us_images/')
+    support_phone_number = models.CharField(max_length=11)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return self.title
