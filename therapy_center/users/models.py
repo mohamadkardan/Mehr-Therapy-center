@@ -17,7 +17,7 @@ class User(models.Model):
     ]
 
     phone_number = models.CharField(max_length=11, unique=True)
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES)
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='client')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
