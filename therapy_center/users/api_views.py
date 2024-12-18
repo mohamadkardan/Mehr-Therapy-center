@@ -11,6 +11,8 @@ from decouple import config
 import base64
 from cryptography.fernet import Fernet
 import requests
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import AccessToken
 
 OTP_REQUEST_LIMIT = 5
 OTP_REQUEST_COUNT_TIMEOUT = 30 # In seconds
@@ -152,6 +154,12 @@ def verify_otp(request):
                     return Response({KEY_MESSAGE: 'OTP expired'}, status=status.HTTP_400_BAD_REQUEST)
                 else:
                     one_time_password.delete()
-                    return Response({KEY_MESSAGE: 'OTP verified successfully'}, status=status.HTTP_200_OK)
+                    refresh = RefreshToken.for_user(user)
+                    data = {
+                        "refresh": str(refresh),
+                        "access": str(refresh.access_token),
+                        "phone_number": phone_number
+                    }
+                    return Response(data, status=status.HTTP_200_OK)
             else:
                 return Response({KEY_MESSAGE: 'OTP is Invalid'}, status=status.HTTP_400_BAD_REQUEST)
