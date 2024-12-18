@@ -17,7 +17,7 @@ class User(models.Model):
     ]
 
     phone_number = models.CharField(max_length=11, unique=True)
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='client')
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -28,7 +28,7 @@ class Client(models.Model):
     Represents a client profile, linked to a user account.
     """
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='client_profile')
-    fullname = models.CharField(max_length=255)
+    fullname = models.CharField(max_length=255, blank=True)
     profile_image_url = models.URLField(blank=True, null=True)
 
     def __str__(self):
