@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.exceptions import ValidationError
+from django.utils.timezone import now
 
 
 # Create your models here.
@@ -68,3 +69,13 @@ class Owner(models.Model):
 
     def __str__(self):
         return f'{self.user.phone_number} {self.name}'
+
+class OneTimePassword(models.Model):
+    value = models.TextField()
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    expire_time = models.DateTimeField()
+    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def is_expired(self):
+        return now() > self.expire_time
